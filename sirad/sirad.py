@@ -3,7 +3,7 @@ import lxml.etree as ET
 import pandas as pd
 from jinja2 import Template
 
-from . code_templates import MODELS_PY, VIEWS_PY, TABLES_PY, FORMS_PY, FILTERS_PY
+from . code_templates import *
 
 FIELD_TYPE_MAP = {
     "INTEGER": "IntegerField",
@@ -146,6 +146,16 @@ class SiradReader():
 
     def serialize_filters(self, file_name='output_filters.py'):
         t = Template(FILTERS_PY)
+        output = t.render(
+            data=self.datamodel_as_dicts(),
+            app_name="sirad"
+        )
+        with open(file_name, "w") as text_file:
+            print(output, file=text_file)
+        return output
+
+    def serialize_urls(self, file_name='output_urls.py'):
+        t = Template(URLS_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
             app_name="sirad"

@@ -184,6 +184,7 @@ class {{ x.model_name }}ListView(GenericListView):
     model = {{ x.model_name }}
     filter_class = {{ x.model_name }}ListFilter
     formhelper_class = {{ x.model_name }}FilterFormHelper
+    table_class = {{ x.model_name }}Table
     init_columns = [
         'id',
     ]

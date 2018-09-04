@@ -196,9 +196,14 @@ class SiradReader():
         return output
 
     def generate_app_files(self, app_name='my_sirad_app', prefix=None):
+        out = []
         for key, value in self.DJANGO_APP_FILES.items():
             if prefix:
                 filename = "{}_{}".format(prefix, key)
             else:
                 filename = key
-            yield self.serialize_file(app_name="my_sirad_app", file_name=key, template=value)
+            output = self.serialize_file(
+                app_name="my_sirad_app", file_name=filename, template=value
+            )
+            out.append(output)
+        return out

@@ -163,3 +163,13 @@ class SiradReader():
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
+
+    def serialize_admin(self, file_name='output_admin.py'):
+        t = Template(ADMIN_PY)
+        output = t.render(
+            data=self.datamodel_as_dicts(),
+            app_name="sirad"
+        )
+        with open(file_name, "w") as text_file:
+            print(output, file=text_file)
+        return output

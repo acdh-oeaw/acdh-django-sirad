@@ -46,6 +46,15 @@ class SiradReader():
             'sirad': "http://www.bar.admin.ch/xmlns/siard/2.0/metadata.xsd"
         }
         self.tree = ET.parse(xml_file)
+        self.DJANGO_APP_FILES = {
+            "admin.py": ADMIN_PY,
+            "urls.py": URLS_PY,
+            "filters.py": FILTERS_PY,
+            "forms.py": FORMS_PY,
+            "tables.py": TABLES_PY,
+            "views.py": VIEWS_PY,
+            "models.py": MODELS_PY
+        }
 
     def get_columns(self):
         return self.tree.xpath('.//sirad:tables//sirad:columns/sirad:column', namespaces=self.nsmap)
@@ -104,72 +113,92 @@ class SiradReader():
             classes.append(class_dict)
         return classes
 
-    def serialize_data_model(self, file_name='output_model.py'):
+    def serialize_data_model(self, app_name="my_sirad_app", file_name='output_model.py'):
         t = Template(MODELS_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
 
-    def serialize_views(self, file_name='output_views.py'):
+    def serialize_views(self, app_name="my_sirad_app", file_name='output_views.py'):
         t = Template(VIEWS_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
 
-    def serialize_tables(self, file_name='output_tables.py'):
+    def serialize_tables(self, app_name="my_sirad_app", file_name='output_tables.py'):
         t = Template(TABLES_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
 
-    def serialize_forms(self, file_name='output_forms.py'):
+    def serialize_forms(self, app_name="my_sirad_app", file_name='output_forms.py'):
         t = Template(FORMS_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
 
-    def serialize_filters(self, file_name='output_filters.py'):
+    def serialize_filters(self, app_name="my_sirad_app", file_name='output_filters.py'):
         t = Template(FILTERS_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
 
-    def serialize_urls(self, file_name='output_urls.py'):
+    def serialize_urls(self, app_name="my_sirad_app", file_name='output_urls.py'):
         t = Template(URLS_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
 
-    def serialize_admin(self, file_name='output_admin.py'):
+    def serialize_admin(self, app_name="my_sirad_app", file_name='output_admin.py'):
         t = Template(ADMIN_PY)
         output = t.render(
             data=self.datamodel_as_dicts(),
-            app_name="sirad"
+            app_name=app_name
         )
         with open(file_name, "w") as text_file:
             print(output, file=text_file)
         return output
+
+    def serialize_file(
+        self, app_name="my_sirad_app", file_name='output_file.py', template=MODELS_PY
+    ):
+        t = Template(template)
+        output = t.render(
+            data=self.datamodel_as_dicts(),
+            app_name=app_name
+        )
+        with open(file_name, "w") as text_file:
+            print(output, file=text_file)
+        return output
+
+    def generate_app_files(self, app_name='my_sirad_app', prefix=None):
+        for key, value in self.DJANGO_APP_FILES.items():
+            if prefix:
+                filename = "{}_{}".format(prefix, key)
+            else:
+                filename = key
+            yield self.serialize_file(app_name="my_sirad_app", file_name=key, template=value)

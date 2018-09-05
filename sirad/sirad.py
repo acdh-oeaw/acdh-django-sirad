@@ -1,7 +1,9 @@
+import os
 import re
 import lxml.etree as ET
 import pandas as pd
 from jinja2 import Template
+from django.contrib.contenttypes.models import ContentType
 
 from . code_templates import *
 
@@ -41,11 +43,13 @@ class SiradReader():
 
     """ a class to process sirad metadata file """
 
-    def __init__(self, xml_file):
+    def __init__(self, sirad_root):
         self.nsmap = {
             'sirad': "http://www.bar.admin.ch/xmlns/siard/2.0/metadata.xsd"
         }
-        self.tree = ET.parse(xml_file)
+        self.sirad_root = sirad_root
+        self.xml_file = os.path.join(self.sirad_root, 'header', 'metadata.xml')
+        self.tree = ET.parse(self.xml_file)
         self.DJANGO_APP_FILES = {
             "admin.py": ADMIN_PY,
             "urls.py": URLS_PY,
@@ -75,6 +79,10 @@ class SiradReader():
             './/ancestor::sirad:table/sirad:folder/text()',
             namespaces=self.nsmap
         )[0]
+        field_dict['table_content_file'] = os.path.join(
+            self.sirad_root, 'content', 'schema1',
+            field_dict['folder_name'],  "{}.xml".format(field_dict['folder_name'])
+        )
         field_dict['field_name'] = column.xpath('./sirad:name/text()', namespaces=self.nsmap)[0]
         field_dict['field_type'] = column.xpath('./sirad:type/text()', namespaces=self.nsmap)[0]
         field_dict['field_nullable'] = column.xpath(
@@ -104,12 +112,17 @@ class SiradReader():
         for name, group in self.rows_grouped_by('model_name'):
             class_dict = {}
             class_dict['model_name'] = name
+            class_dict['content_file'] = group.iloc[[0]]['table_content_file'].values[0]
+            class_dict['folder_name'] = group.iloc[[0]]['folder_name'].values[0]
             class_dict['fields'] = []
+            c = 1
             for i, row in group.iterrows():
                 field = {}
                 field['model_field_name'] = row['model_field_name']
                 field['model_field_type'] = row['model_field_type']
+                field['column_id'] = c
                 class_dict['fields'].append(field)
+                c += 1
             classes.append(class_dict)
         return classes
 
@@ -207,3 +220,31 @@ class SiradReader():
             )
             out.append(output)
         return out
+
+    def create_object_from_dict(self, model_dict):
+        ct = ContentType.objects.get(model=model_dict['model_name'].lower()).model_class()
+        tree = ET.parse(model_dict['content_file'])
+        rows = tree.xpath('.//*[local-name() = "row"]')
+        for row in rows:
+            temp_dict = {}
+            for x in model_dict['fields']:
+                expr = "./*[local-name() = $name]"
+                try:
+                    value = row.xpath(expr, name="c{}".format(x['column_id']))[0].text
+                except IndexError:
+                    value = None
+                if value:
+                    if value == 'false':
+                        value = False
+                    elif value == 'true':
+                        value = True
+                    temp_dict[x['model_field_name']] = value
+            temp_object = ct(**temp_dict)
+            temp_object.save()
+        return temp_object.id
+
+    def populate_database(self):
+        model_list = self.datamodel_as_dicts()
+        for x in model_list:
+            self.create_object_from_dict(x)
+        return "done"

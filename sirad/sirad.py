@@ -41,7 +41,7 @@ def make_class_names(string):
 
 class SiradReader():
 
-    """ a class to process sirad metadata file """
+    """ a class to process a SIRAD Archiv """
 
     def __init__(self, sirad_root):
         self.nsmap = {
@@ -91,6 +91,10 @@ class SiradReader():
         return field_dict
 
     def tables_df(self):
+
+        """ returns a pandas dataframe providing enriched information
+        fetched from sirads 'metadata.xml' """
+
         df = pd.DataFrame([self.get_field_dict(x) for x in self.get_columns()])
         df['fields_per_table'] = df.groupby('table_name')['table_name'].transform('count')
         df['model_name'] = df.apply(lambda row: make_class_names(row['table_name']), axis=1)
@@ -108,6 +112,10 @@ class SiradReader():
         return self.tables_df().groupby(column_name)
 
     def datamodel_as_dicts(self):
+
+        """ returns the information from 'metadata.xml' as a list of python-dicts which is used by
+        further methods """
+
         classes = []
         for name, group in self.rows_grouped_by('model_name'):
             class_dict = {}
@@ -209,6 +217,8 @@ class SiradReader():
         return output
 
     def generate_app_files(self, app_name='my_sirad_app', prefix=None):
+        """ produces all fields needed to get a djangobaseproject app up and running:
+        'models.py', 'forms.py', 'filters.py', 'tables.py', 'urls.py' and admin.py'"""
         out = []
         for key, value in self.DJANGO_APP_FILES.items():
             if prefix:
@@ -244,6 +254,7 @@ class SiradReader():
         return temp_object.id
 
     def populate_database(self):
+        """" reads sirads 'content' files and populates the according database tables """
         model_list = self.datamodel_as_dicts()
         for x in model_list:
             self.create_object_from_dict(x)

@@ -226,7 +226,7 @@ class SiradReader():
             else:
                 filename = key
             output = self.serialize_file(
-                app_name="my_sirad_app", file_name=filename, template=value
+                app_name=app_name, file_name=filename, template=value
             )
             out.append(output)
         return out

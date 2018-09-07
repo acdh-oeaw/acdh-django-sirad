@@ -38,5 +38,5 @@ To import the data from your SIARD-ARCHIV run `python manage.py populate_sirad a
 
 Be aware the the created app was build to work within djangobaseproject_
 
-.. _SIARD-ARCHIV:
+.. _SIARD-ARCHIV: http://www.eark-project.com/resources/specificationdocs/32-specification-for-siard-format-v20
 .. _djangobaseproject: https://github.com/acdh-oeaw/djangobaseproject

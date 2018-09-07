@@ -225,14 +225,30 @@ class SiradReader():
                 filename = "{}_{}".format(prefix, key)
             else:
                 filename = key
+            filename = os.path.join(app_name, filename)
+            try:
+                os.mkdir(app_name)
+            except Exception as e:
+                print(e)
             output = self.serialize_file(
                 app_name=app_name, file_name=filename, template=value
             )
             out.append(output)
+        t = Template(APP_PY)
+        output = t.render(app_name=app_name)
+        app_file = os.path.join(app_name, 'apps.py')
+        with open(app_file, "w") as text_file:
+            print(output, file=text_file)
+        init_file = os.path.join(app_name, '__init__.py')
+        with open(init_file, "w") as text_file:
+            print("#", file=text_file)
         return out
 
-    def create_object_from_dict(self, model_dict):
-        ct = ContentType.objects.get(model=model_dict['model_name'].lower()).model_class()
+    def create_object_from_dict(self, model_dict, app_name):
+        ct = ContentType.objects.get(
+            app_label=app_name,
+            model=model_dict['model_name'].lower()
+        ).model_class()
         tree = ET.parse(model_dict['content_file'])
         rows = tree.xpath('.//*[local-name() = "row"]')
         for row in rows:
@@ -251,11 +267,12 @@ class SiradReader():
                     temp_dict[x['model_field_name']] = value
             temp_object = ct(**temp_dict)
             temp_object.save()
+            print("{} ID: {} saved".format(model_dict['model_name'], temp_object))
         return temp_object.id
 
-    def populate_database(self):
+    def populate_database(self, app_name):
         """" reads sirads 'content' files and populates the according database tables """
         model_list = self.datamodel_as_dicts()
         for x in model_list:
-            self.create_object_from_dict(x)
+            self.create_object_from_dict(x, app_name)
         return "done"
